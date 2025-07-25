@@ -1,15 +1,16 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
 
 class UserBase(BaseModel):
-    username: str
-    email: EmailStr
+    username: str = Field(..., description="Nome de usuário único", example="joao_silva")
+    email: EmailStr = Field(..., description="Email válido", example="joao@email.com")
 
 class UserCreate(UserBase):
-    password: str
+    password: Optional[str] = Field(None, description="Senha (opcional para atualização)", example="senha123")
 
 class UserOut(UserBase):
-    id: int
+    id: int = Field(..., description="ID único do usuário")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
