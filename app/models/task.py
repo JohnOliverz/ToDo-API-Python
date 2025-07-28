@@ -8,7 +8,7 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     description = Column(String, index=True, nullable=False)
-    completed = Column(String, index=True, default="Pendente")
+    status = Column(String, index=True, default="Pendente")
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
 
     user = relationship("User", backref="tasks")

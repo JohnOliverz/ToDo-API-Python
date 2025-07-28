@@ -4,8 +4,8 @@ from typing import List
 from database.session import get_db
 from models.task import Task
 from models.user import User
-from schemas.task import TaskCreate, TaskOut
-from auth import get_current_user
+from schemas.task import TaskCreate, TaskOut, TaskStatusUpdate
+from common.auth import get_current_user
 
 router = APIRouter()
 
@@ -23,33 +23,43 @@ def get_tasks(current_user: User = Depends(get_current_user), db: Session = Depe
 
 @router.put("/tasks/{task_id}", response_model=TaskOut, summary="Atualizar Tarefa", description="Atualiza uma tarefa específica do usuário")
 def update_task(task_id: int, task: TaskCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if task_id <= 0:
+        raise HTTPException(status_code=400, detail="ID da tarefa deve ser um número positivo")
+    
     db_task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
     if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada ou não pertence ao usuário")
     
     for key, value in task.dict().items():
-        setattr(db_task, key, value)
+        if value is not None:
+            setattr(db_task, key, value)
     
     db.commit()
     db.refresh(db_task)
     return db_task
 
-@router.patch("/tasks/{task_id}/complete", summary="Completar Tarefa", description="Marca uma tarefa como concluída")
-def complete_task(task_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+@router.patch("/tasks/{task_id}/status", summary="Atualizar Status", description="Atualiza o status da tarefa (Pendente, Em Progresso, Concluída)")
+def update_task_status(task_id: int, status_data: TaskStatusUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if task_id <= 0:
+        raise HTTPException(status_code=400, detail="ID da tarefa deve ser um número positivo")
+    
     db_task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
     if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada ou não pertence ao usuário")
     
-    db_task.completed = "Concluída"
+    db_task.status = status_data.status
     db.commit()
-    return {"message": "Task completed"}
+    return {"message": f"Status da tarefa atualizado para: {status_data.status}"}
 
 @router.delete("/tasks/{task_id}", summary="Deletar Tarefa", description="Remove uma tarefa específica do usuário")
 def delete_task(task_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if task_id <= 0:
+        raise HTTPException(status_code=400, detail="ID da tarefa deve ser um número positivo")
+    
     db_task = db.query(Task).filter(Task.id == task_id, Task.user_id == current_user.id).first()
     if not db_task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada ou não pertence ao usuário")
     
     db.delete(db_task)
     db.commit()
-    return {"message": "Task deleted"}
+    return {"message": "Tarefa deletada com sucesso"}
