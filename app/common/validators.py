@@ -36,6 +36,8 @@ def validate_task_title(title: str) -> str:
     return title.strip()
 
 def validate_task_description(description: str) -> str:
+    if description is None:
+        return None
     if description and len(description) > 1000:
         raise HTTPException(status_code=400, detail="Descrição deve ter no máximo 1000 caracteres")
     

@@ -7,7 +7,7 @@ class Task(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
-    description = Column(String, index=True, nullable=False)
+    description = Column(String, index=True, nullable=True)
     status = Column(String, index=True, default="Pendente")
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
 
